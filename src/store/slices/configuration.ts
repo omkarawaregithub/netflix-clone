@@ -15,12 +15,13 @@ type ConfigurationType = {
 };
 
 export const extendedApi = tmdbApi.injectEndpoints({
-  endpoints: (build) => ({
-    getConfiguration: build.query<ConfigurationType, undefined>({
+  endpoints: (build: any) => ({
+    getConfiguration: build.query({
       query: () => ({
         url: "/configuration",
         params: { api_key: TMDB_V3_API_KEY },
       }),
+      transformResponse: (response: ConfigurationType) => response,
     }),
   }),
 });
