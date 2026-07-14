@@ -48,14 +48,17 @@ pipeline{
         }
         stage("Docker Build & Push") {
             steps {
-                script {
-                    withDockerRegistry(credentialsId: 'dockerhub-token') {
-                        sh '''
-                            docker build --no-cache -t netflix .
-                            docker tag netflix omkaraware/netflix:latest
-                            docker push omkaraware/netflix:latest
-                        '''
-                    }
+                withCredentials([string(credentialsId: 'tmdb-api-key', variable: 'TMDB_KEY')]) {
+                    sh '''
+                        echo "TMDB Key Length: ${#TMDB_KEY}"
+
+                        docker build \
+                        --build-arg TMDB_V3_API_KEY=$TMDB_KEY \
+                        -t netflix .
+
+                        docker tag netflix omkaraware/netflix:latest
+                        docker push omkaraware/netflix:latest
+                    '''
                 }
             }
         }
