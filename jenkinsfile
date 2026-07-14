@@ -46,19 +46,34 @@ pipeline{
                 sh "trivy fs . > trivyfs.txt"
             }
         }
-        stage("Docker Build & Push") {
+        stage('Verify TMDB Secret') {
             steps {
                 withCredentials([string(credentialsId: 'tmdb-api-key', variable: 'TMDB_KEY')]) {
                     sh '''
-                        echo "TMDB Key Length: ${#TMDB_KEY}"
-
-                        docker build \
-                        --build-arg TMDB_V3_API_KEY=$TMDB_KEY \
-                        -t netflix .
-
-                        docker tag netflix omkaraware/netflix:latest
-                        docker push omkaraware/netflix:latest
+                        if [ -z "$TMDB_KEY" ]; then
+                            echo "ERROR: TMDB_KEY is EMPTY"
+                            exit 1
+                        else
+                            echo "SUCCESS: TMDB_KEY Length = ${#TMDB_KEY}"
+                        fi
                     '''
+                }
+            }
+        }
+
+        stage("Docker Build & Push") {
+            steps {
+                withCredentials([string(credentialsId: 'tmdb-api-key', variable: 'TMDB_KEY')]) {
+                    withDockerRegistry(credentialsId: 'dockerhub-token') {
+                        sh '''
+                            docker build \
+                            --build-arg TMDB_V3_API_KEY="$TMDB_KEY" \
+                            -t netflix .
+
+                            docker tag netflix omkaraware/netflix:latest
+                            docker push omkaraware/netflix:latest
+                        '''
+                    }
                 }
             }
         }
